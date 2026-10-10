@@ -37,10 +37,21 @@ def reps(is_tr):
     if os.path.exists(f"{v}/voxtral_crops.npy"):
         out["voxtral"] = (np.load(f"{v}/voxtral_full.npy").astype(np.float32),
                           np.load(f"{v}/voxtral_crops.npy").astype(np.float32))
+    v2 = f"{FEAT}/voxtral2"
+    if os.path.exists(f"{v2}/voxtral2_crops.npy"):  # [upper-layer mean|std (6144) | last-token states (9216)]
+        f2, c2 = (np.load(f"{v2}/voxtral2_{n}.npy").astype(np.float32) for n in ("full", "crops"))
+        out["voxtral2_pool"], out["voxtral2_last"] = (f2[:, :6144], c2[:, :6144]), (f2[:, 6144:], c2[:, 6144:])
+    if os.path.exists(f"{v2}/voxtral2_judge_crops.csv"):  # next-digit distributions of both Voxtral prompts
+        out["judge"] = tuple(np.hstack([pd.read_csv(f"{FEAT}/voxtral/voxtral_judge_{n}.csv").values,
+                                        pd.read_csv(f"{v2}/voxtral2_judge_{n}.csv").values]).astype(np.float32)
+                             for n in ("full", "crops"))
     if os.path.exists(f"{FEAT}/vb_crops.csv"):  # hand text stats of the verbatim transcripts
         out["hand_vb"] = tuple(pd.read_csv(f"{FEAT}/vb_{n}.csv").values.astype(np.float32) for n in ("full", "crops"))
     if {"wavlm", "whisper", "voxtral"} <= out.keys():
         out["audio_vox"] = tuple(np.hstack([out[n][i] for n in ("wavlm", "whisper", "voxtral")]) for i in (0, 1))
+    if {"audio_vox", "voxtral2_pool", "voxtral2_last"} <= out.keys():
+        out["audio_all"] = tuple(np.hstack([out[n][i] for n in ("audio_vox", "voxtral2_pool", "voxtral2_last")])
+                                 for i in (0, 1))
     return out
 
 
@@ -94,6 +105,9 @@ def main():
         "wavlm_ridge": ("wavlm", None), "whisper_ridge": ("whisper", None), "whisper_svr": ("whisper", "svr"),
         "voxtral_ridge": ("voxtral", None), "audio_vox_ridge": ("audio_vox", None),
         "text_vb_ridge": ("text_verbatim", None), "text_vb_svr": ("text_verbatim", "svr"),
+        "vox2_pool_ridge": ("voxtral2_pool", None), "vox2_last_ridge": ("voxtral2_last", None),
+        "audio_all_ridge": ("audio_all", None),
+        "judge_svr": ("judge", make_pipeline(StandardScaler(), SVR(C=1))), "judge_lgb": ("judge", LGB),
         "hand_vb_svr": ("hand_vb", make_pipeline(StandardScaler(), SVR(C=1))), "hand_vb_lgb": ("hand_vb", LGB),
     }
     # hand_vb models are opt-in: they scored 0.85 alone and got zero stack weight

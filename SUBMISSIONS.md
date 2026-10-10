@@ -17,3 +17,4 @@ gCV = speaker-grouped CV RMSE on graded (non-zero) train clips.
 | v12 | 2026-10-10 | 57044529 | v11 + verbatim-prompt Whisper-turbo transcripts (crop transcripts) -> DeBERTa-L Ridge/SVR; 7 models all on full+4 crops | crop-val 0.516 | **0.3230** |
 | v13 | 2026-10-10 | 57044537 | plain mean of v10 (full-clip models) and v12 (crop-trained models), corr 0.987 | - | **0.3211** |
 | (no submit) | 2026-10-10 | - | Ridge alpha sweep on crop stack: alpha 3 best per model (voxtral 0.5555->0.5515) but stack CV unchanged 0.5162; verbatim hand features (vb_*) alone 0.845, zero NNLS weight -> dropped | crop-val 0.516 | - |
+| (no submit) | 2026-10-10 | - | Voxtral v2 (errors prompt; upper layers 60-90% pooled; last-token states): single models 0.565 / 0.573, judge digit corr -0.41 but stack crop-val 0.5164 (pooled/last) and 0.5184 (+judge) vs 0.5163 -> no gain, corr(v12,v14)=0.9975, not submitted | crop-val 0.516 | - |
