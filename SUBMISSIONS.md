@@ -15,3 +15,4 @@ gCV = speaker-grouped CV RMSE on graded (non-zero) train clips.
 | v10 | 2026-10-10 | 57041052 | v9 + Voxtral-Mini-3B hidden-state Ridge/SVR, audio-concat+Voxtral Ridge, judge-digit SVR (6 models) | gCV 0.513 | **0.3255** |
 | v11 | 2026-10-10 | 57043310 | audio-only models (WavLM/Whisper/Voxtral Ridge/SVR) trained on full + 4 test-length crops, scored on crops; no text models | crop-val 0.525 | 0.3287 |
 | v12 | 2026-10-10 | 57044529 | v11 + verbatim-prompt Whisper-turbo transcripts (crop transcripts) -> DeBERTa-L Ridge/SVR; 7 models all on full+4 crops | crop-val 0.516 | **0.3230** |
+| v13 | 2026-10-10 | 57044537 | plain mean of v10 (full-clip models) and v12 (crop-trained models), corr 0.987 | - | **0.3211** |
