@@ -111,8 +111,30 @@ def text(df):
     save("text", rows)
 
 
+@torch.inference_mode()
+def text_verbatim():
+    """DeBERTa-large over the verbatim-prompted transcripts: full clips and test-length crops."""
+    from transformers import AutoModel, AutoTokenizer
+    tok = AutoTokenizer.from_pretrained("microsoft/deberta-v3-large")
+    model = AutoModel.from_pretrained("microsoft/deberta-v3-large", dtype=torch.float32).to(DEV).eval()
+    for name in ("full", "crops"):
+        txt = pd.read_csv(f"{os.path.dirname(OUT)}/verbatim/verbatim_{name}.csv")["transcript"].fillna("").tolist()
+        rows = []
+        for i in range(0, len(txt), 16):
+            enc = tok(txt[i:i + 16], truncation=True, max_length=512, padding=True, return_tensors="pt").to(DEV)
+            hs = model(**enc, output_hidden_states=True).hidden_states
+            m = enc["attention_mask"].unsqueeze(-1).float()
+            rows += list(torch.stack([(h * m).sum(1) / m.sum(1) for h in hs], 1).cpu().numpy())
+            if i % 320 == 0:
+                print(f"  text_verbatim {name} {i}/{len(txt)}", flush=True)
+        save(f"text_verbatim_{name}", rows)
+
+
 if __name__ == "__main__":
     args = sys.argv[1:]
+    if args == ["text_verbatim"]:
+        text_verbatim()
+        sys.exit()
     if "--crops" in args:  # audio encoders on the test-length train crops -> <name>_crops_mean.npy
         args.remove("--crops")
         for name in args or ["wavlm", "whisper"]:
