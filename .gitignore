@@ -22,3 +22,7 @@ dataset/*.csv
 notebook/out/
 deberta/out/
 *.ipynb_checkpoints
+dataset_features/
+features/voxtral/
+features/verbatim/
+features/crops_emb/

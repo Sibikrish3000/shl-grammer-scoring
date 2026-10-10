@@ -15,8 +15,11 @@ import pandas as pd
 from joblib import Parallel, delayed
 from sklearn.base import clone
 from sklearn.model_selection import StratifiedGroupKFold
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
+from sklearn.svm import SVR
 
-from kaggle.stack import (EMB, FEAT, batch_of, load, nnls_fit, pool, ridge, rmse, speaker_groups, stack, svr)
+from kaggle.stack import (EMB, FEAT, LGB, batch_of, load, nnls_fit, pool, ridge, rmse, speaker_groups, stack, svr)
 
 LAYERS = {"wavlm": [19, 20, 21], "whisper": [30, 31, 32], "text_verbatim": [21, 22, 23]}
 
@@ -34,6 +37,8 @@ def reps(is_tr):
     if os.path.exists(f"{v}/voxtral_crops.npy"):
         out["voxtral"] = (np.load(f"{v}/voxtral_full.npy").astype(np.float32),
                           np.load(f"{v}/voxtral_crops.npy").astype(np.float32))
+    if os.path.exists(f"{FEAT}/vb_crops.csv"):  # hand text stats of the verbatim transcripts
+        out["hand_vb"] = tuple(pd.read_csv(f"{FEAT}/vb_{n}.csv").values.astype(np.float32) for n in ("full", "crops"))
     if {"wavlm", "whisper", "voxtral"} <= out.keys():
         out["audio_vox"] = tuple(np.hstack([out[n][i] for n in ("wavlm", "whisper", "voxtral")]) for i in (0, 1))
     return out
@@ -62,6 +67,8 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--models", default="")
     ap.add_argument("--pool", type=float, default=None)
+    ap.add_argument("--alpha", type=float, default=1.0, help="Ridge alpha, scaled by feature dimension")
+    ap.add_argument("--svr-c", type=float, default=3.0)
     ap.add_argument("--out", default="submissions/stack_crops.csv")
     args = ap.parse_args()
 
@@ -87,15 +94,17 @@ def main():
         "wavlm_ridge": ("wavlm", None), "whisper_ridge": ("whisper", None), "whisper_svr": ("whisper", "svr"),
         "voxtral_ridge": ("voxtral", None), "audio_vox_ridge": ("audio_vox", None),
         "text_vb_ridge": ("text_verbatim", None), "text_vb_svr": ("text_verbatim", "svr"),
+        "hand_vb_svr": ("hand_vb", make_pipeline(StandardScaler(), SVR(C=1))), "hand_vb_lgb": ("hand_vb", LGB),
     }
-    chosen = args.models.split(",") if args.models else [k for k, (r, _) in cand.items() if r in R]
+    # hand_vb models are opt-in: they scored 0.85 alone and got zero stack weight
+    chosen = args.models.split(",") if args.models else [k for k, (r, _) in cand.items() if r in R and r != "hand_vb"]
 
     P_oof, P_te, names = [], [], []
     for name in chosen:
         rep, kind = cand[name]
         Xf_all, Xc_all = R[rep]
         d = Xf_all.shape[1]
-        model = ridge(1.0, d) if kind is None else svr(3, d)
+        model = ridge(args.alpha, d) if kind is None else svr(args.svr_c, d) if kind == "svr" else kind
         oof, te = cross_val(model, Xf_all[is_tr][nz], Xc_all[keep], parent, y, folds, Xf_all[~is_tr])
         print(f"  {name:16s} crop-val RMSE {np.mean([rmse(o, y) for o in oof]):.4f}", flush=True)
         P_oof.append(oof)
