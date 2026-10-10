@@ -11,3 +11,4 @@ gCV = speaker-grouped CV RMSE on graded (non-zero) train clips.
 | v7 | 2026-10-10 | 57039497 | v6 + Whisper-large-v3 encoder L30-32 Ridge/SVR | gCV 0.542 | 0.3598 |
 | v8 | 2026-10-10 | 57039732 | v7 + frozen DeBERTa-v3-large transcript embeddings L21-23 Ridge/SVR | gCV 0.519 | 0.3345 |
 | probe | 2026-10-10 | 57040069 | v8 - 0.12 constant shift (reference repo found +0.118 test bias) -> worse, no shift for us | - | 0.3416 |
+| v9 | 2026-10-10 | 57040138 | 3-model NNLS stack: all-embedding concat Ridge + Whisper-enc SVR + DeBERTa-L text Ridge (same gCV as v8, simpler) | gCV 0.519 | 0.3357 |
