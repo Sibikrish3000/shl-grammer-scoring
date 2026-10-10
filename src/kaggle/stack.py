@@ -158,8 +158,15 @@ def main():
         if os.path.exists(p):
             E = np.load(p).astype(np.float32)
             reps[name] = E[:, layers].mean(1)
+    vp = f"{FEAT}/voxtral/voxtral_full.npy"
+    if os.path.exists(vp):  # Voxtral-Mini-3B audio-LLM hidden states + its direct rubric judgement
+        reps["voxtral"] = np.load(vp).astype(np.float32)
+        reps["voxtral_judge"] = pd.read_csv(f"{FEAT}/voxtral/voxtral_judge_full.csv").values.astype(np.float32)
     if "wavlm" in reps and "whisper" in reps:
         reps["audio_cat"] = np.hstack([reps["wavlm"], reps["whisper"]])
+        if "voxtral" in reps:
+            reps["audio_vox"] = np.hstack([reps["audio_cat"], reps["voxtral"]])
+            reps["hand_judge"] = np.hstack([reps["hand"], reps["voxtral_judge"]])
         if "text" in reps:
             reps["all_cat"] = np.hstack([reps["audio_cat"], reps["text"]])
 
@@ -170,6 +177,8 @@ def main():
         "whisper_ridge": ("whisper", None), "whisper_svr": ("whisper", "svr"),
         "text_ridge": ("text", None), "text_svr": ("text", "svr"),
         "audio_cat_ridge": ("audio_cat", None), "all_cat_ridge": ("all_cat", None),
+        "voxtral_ridge": ("voxtral", None), "voxtral_svr": ("voxtral", "svr"),
+        "audio_vox_ridge": ("audio_vox", None), "hand_judge_svr": ("hand_judge", make_pipeline(StandardScaler(), SVR(C=1))),
     }
     chosen = args.models.split(",") if args.models else [k for k, (r, _) in candidates.items() if r in reps]
 
