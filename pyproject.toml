@@ -1,0 +1,34 @@
+[project]
+name = "kaggle"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "sibi krishnamoorthy", email = "sibikrish3000@gmail.com" }
+]
+requires-python = ">=3.13"
+dependencies = [
+    "cactus-needle>=3.1.2",
+    "jupyter>=1.1.1",
+    "lightgbm>=4.7.0",
+    "matplotlib>=3.11.2",
+    "mlflow>=3.17.0",
+    "pandas>=3.0.6",
+    "protobuf>=6.33.6",
+    "scikit-learn>=1.9.1",
+    "scipy>=1.18.1",
+    "sentencepiece>=0.2.2",
+    "silero-vad>=6.2.3",
+    "soundfile>=0.14.0",
+    "torch>=2.14.1",
+    "torchaudio>=2.11.0",
+    "torchvision>=0.29.1",
+    "transformers>=5.19.0",
+]
+
+[project.scripts]
+kaggle = "kaggle:main"
+
+[build-system]
+requires = ["uv_build>=0.12.5,<0.13.0"]
+build-backend = "uv_build"

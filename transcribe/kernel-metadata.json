@@ -1,0 +1,13 @@
+{
+  "id": "sibikrish3000/shl-grammar-whisper-transcripts",
+  "title": "SHL Grammar - Whisper Transcripts",
+  "code_file": "transcribe.ipynb",
+  "language": "python",
+  "kernel_type": "notebook",
+  "is_private": true,
+  "enable_gpu": true,
+  "enable_internet": true,
+  "competition_sources": ["shl-hiring-assessment-2026"],
+  "dataset_sources": [],
+  "kernel_sources": []
+}
