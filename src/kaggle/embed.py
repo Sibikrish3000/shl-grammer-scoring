@@ -32,8 +32,15 @@ def clips():
     return df
 
 
-def load_16k(path):
-    wav, sr = sf.read(path, dtype="float32", always_2d=True)
+def crops():
+    """Test-length crops of the train clips (kaggle.crops); n = samples kept from the start."""
+    df = pd.read_csv(f"{os.path.dirname(OUT)}/crops.csv")
+    return df.assign(split="train", n=df.n_samples)[["filename", "split", "n"]]
+
+
+def load_16k(r):
+    wav, sr = sf.read(f"{DATA_DIR}/{r.split}/{r.filename}", dtype="float32", always_2d=True)
+    wav = wav[: int(r.n)] if "n" in r and pd.notna(r.n) else wav  # crop (all clips are 16 kHz)
     wav = torch.from_numpy(wav.mean(1))
     return (AF.resample(wav, sr, SR) if sr != SR else wav).numpy()
 
@@ -46,29 +53,29 @@ def save(name, rows):
 
 
 @torch.inference_mode()
-def wavlm(df):
+def wavlm(df, suffix=""):
     from transformers import AutoFeatureExtractor, WavLMModel
     fe = AutoFeatureExtractor.from_pretrained("microsoft/wavlm-large")
     model = WavLMModel.from_pretrained("microsoft/wavlm-large", dtype=DTYPE).to(DEV).eval()
     rows = []
     for i, r in df.iterrows():
-        x = fe(load_16k(f"{DATA_DIR}/{r.split}/{r.filename}"), sampling_rate=SR, return_tensors="pt").input_values
+        x = fe(load_16k(r), sampling_rate=SR, return_tensors="pt").input_values
         hs = model(x.to(DEV, DTYPE), output_hidden_states=True).hidden_states  # 25 x (1, T, 1024)
         rows.append(torch.stack([h[0].float().mean(0) for h in hs]).cpu().numpy())
         if i % 100 == 0:
             print(f"  wavlm {i}/{len(df)}", flush=True)
-    save("wavlm", rows)
+    save("wavlm" + suffix, rows)
 
 
 @torch.inference_mode()
-def whisper(df):
+def whisper(df, suffix=""):
     from transformers import WhisperFeatureExtractor, WhisperModel
     fe = WhisperFeatureExtractor.from_pretrained("openai/whisper-large-v3")
     enc = WhisperModel.from_pretrained("openai/whisper-large-v3", dtype=DTYPE).encoder.to(DEV).eval()
     win = 30 * SR
     rows = []
     for i, r in df.iterrows():
-        x = load_16k(f"{DATA_DIR}/{r.split}/{r.filename}")
+        x = load_16k(r)
         chunks = [x[s:s + win] for s in range(0, len(x), win)]
         if len(chunks) > 1 and len(chunks[-1]) < SR:  # drop a <1 s tail
             chunks = chunks[:-1]
@@ -82,7 +89,7 @@ def whisper(df):
         rows.append((total / n).cpu().numpy())
         if i % 100 == 0:
             print(f"  whisper {i}/{len(df)}", flush=True)
-    save("whisper", rows)
+    save("whisper" + suffix, rows)
 
 
 @torch.inference_mode()
@@ -105,6 +112,12 @@ def text(df):
 
 
 if __name__ == "__main__":
-    df = clips()
-    for name in sys.argv[1:] or ["wavlm", "whisper", "text"]:
-        {"wavlm": wavlm, "whisper": whisper, "text": text}[name](df)
+    args = sys.argv[1:]
+    if "--crops" in args:  # audio encoders on the test-length train crops -> <name>_crops_mean.npy
+        args.remove("--crops")
+        for name in args or ["wavlm", "whisper"]:
+            {"wavlm": wavlm, "whisper": whisper}[name](crops(), "_crops")
+    else:
+        df = clips()
+        for name in args or ["wavlm", "whisper", "text"]:
+            {"wavlm": wavlm, "whisper": whisper, "text": text}[name](df)

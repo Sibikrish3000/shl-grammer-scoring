@@ -158,6 +158,10 @@ def main():
         if os.path.exists(p):
             E = np.load(p).astype(np.float32)
             reps[name] = E[:, layers].mean(1)
+    if "wavlm" in reps and "whisper" in reps:
+        reps["audio_cat"] = np.hstack([reps["wavlm"], reps["whisper"]])
+        if "text" in reps:
+            reps["all_cat"] = np.hstack([reps["audio_cat"], reps["text"]])
 
     candidates = {
         "hand_lgb": ("hand", LGB),
@@ -165,6 +169,7 @@ def main():
         "wavlm_ridge": ("wavlm", None), "wavlm_svr": ("wavlm", "svr"),
         "whisper_ridge": ("whisper", None), "whisper_svr": ("whisper", "svr"),
         "text_ridge": ("text", None), "text_svr": ("text", "svr"),
+        "audio_cat_ridge": ("audio_cat", None), "all_cat_ridge": ("all_cat", None),
     }
     chosen = args.models.split(",") if args.models else [k for k, (r, _) in candidates.items() if r in reps]
 
