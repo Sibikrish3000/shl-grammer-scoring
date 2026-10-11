@@ -1,2 +1,1 @@
-def main() -> None:
-    print("Hello from kaggle!")
+"""SHL spoken-grammar scoring pipeline (features, embeddings, speaker-grouped stacking)."""

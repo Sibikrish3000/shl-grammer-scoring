@@ -170,6 +170,8 @@ print(f"{len(sizes)} train speaker groups (sizes 1/2/3/4+: {(sizes == 1).sum()}/
 
 # %% [markdown]
 # Most speakers have 3 near-identical-grade answers (std within a group is a fraction of the overall std).
+# (The single group of size 37 is the 37 zero-graded clips: they share one noisy recording source, so they
+# look like one "voice"; they are handled by the gate and excluded from regression.)
 # A random split puts a speaker's other answers in the training fold, which rewards memorising voices —
 # so **all CV below is `StratifiedGroupKFold` over these groups** (5 folds × 3 repeats).
 
@@ -432,8 +434,10 @@ ax[0].scatter(y_all + np.random.RandomState(1).uniform(-0.08, 0.08, len(y_all)),
 ax[0].plot([0, 5], [0, 5], "r--")
 ax[0].set(xlabel="true grade (jittered)", ylabel="out-of-fold prediction", title=f"OOF: r = {pearsonr(y_all, oofp)[0]:.3f}")
 err = pd.DataFrame({"y": y_all, "e": np.abs(oofp - y_all)}).groupby("y").e.mean()
-err.plot.bar(ax=ax[1], color="darkorange", title="Mean |error| by true grade")
+err.index.name = "true grade"
+err.plot.bar(ax=ax[1], color="darkorange", title="Mean |error| by true grade (grades 1-1.5: 4 clips)")
 bt = pd.DataFrame({"b": np.where(batch[is_tr] == 0, "45 s batch", "other"), "se": (oofp - y_all) ** 2}).groupby("b").se.mean() ** 0.5
+bt.index.name = "recording batch"
 bt.plot.bar(ax=ax[2], color="seagreen", title="OOF RMSE by recording batch")
 ax[3].hist(oofp[nz], 30, alpha=0.6, density=True, label="train OOF")
 ax[3].hist(test_final[~gated], 30, alpha=0.6, density=True, label="test")

@@ -361,18 +361,6 @@ wheels = [
 ]
 
 [[package]]
-name = "cactus-needle"
-version = "3.1.2"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "huggingface-hub" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/fe/e4/edcd82220bec50667f572499c58e844332e4681b516c1dfdc46214fd2166/cactus_needle-3.1.2.tar.gz", hash = "sha256:bfc82088ad9caa2ac0c1887cb99d4517cd39126457bc61c29c81c97281e33828", size = 134309, upload-time = "2026-10-06T16:02:28.419Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/80/2b/577051ddb045ae63cbc0851ddb60b07627f4d5bd85da28175557bddb6459/cactus_needle-3.1.2-py3-none-any.whl", hash = "sha256:318aa9f4f1045b3a55d8266351ec8309d1115485a0fc9171bab3bfb47f47bf80", size = 107732, upload-time = "2026-10-06T16:02:27.004Z" },
-]
-
-[[package]]
 name = "certifi"
 version = "2026.7.22"
 source = { registry = "https://pypi.org/simple" }
@@ -1689,7 +1677,6 @@ name = "kaggle"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
-    { name = "cactus-needle" },
     { name = "jupyter" },
     { name = "lightgbm" },
     { name = "matplotlib" },
@@ -1709,7 +1696,6 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "cactus-needle", specifier = ">=3.1.2" },
     { name = "jupyter", specifier = ">=1.1.1" },
     { name = "lightgbm", specifier = ">=4.7.0" },
     { name = "matplotlib", specifier = ">=3.11.2" },

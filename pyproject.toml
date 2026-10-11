@@ -1,14 +1,13 @@
 [project]
 name = "kaggle"
 version = "0.1.0"
-description = "Add your description here"
+description = "SHL Hiring Assessment 2026: spoken grammar scoring (frozen encoders, speaker-grouped CV, NNLS stack)"
 readme = "README.md"
 authors = [
     { name = "sibi krishnamoorthy", email = "sibikrish3000@gmail.com" }
 ]
 requires-python = ">=3.13"
 dependencies = [
-    "cactus-needle>=3.1.2",
     "jupyter>=1.1.1",
     "lightgbm>=4.7.0",
     "matplotlib>=3.11.2",
@@ -26,8 +25,6 @@ dependencies = [
     "transformers>=5.19.0",
 ]
 
-[project.scripts]
-kaggle = "kaggle:main"
 
 [build-system]
 requires = ["uv_build>=0.12.5,<0.13.0"]
